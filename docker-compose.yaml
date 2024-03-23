@@ -1,0 +1,93 @@
+version: '3.9'
+
+services:
+  redis-1:
+    image: redis:6.0.9
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
+    ports:
+      - "7000:6379"
+    networks:
+      - redis-cluster-net
+
+  redis-2:
+    image: redis:6.0.9
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
+    ports:
+      - "7001:6379"
+    networks:
+      - redis-cluster-net
+
+  redis-3:
+    image: redis:6.0.9
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
+    ports:
+      - "7002:6379"
+    networks:
+      - redis-cluster-net
+
+  redis-4:
+    image: redis:6.0.9
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --slaveof redis-1 6379 --port 6379
+    ports:
+      - "7003:6379"
+    networks:
+      - redis-cluster-net
+
+  redis-5:
+    image: redis:6.0.9
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --slaveof redis-2 6379 --port 6379
+    ports:
+      - "7004:6379"
+    networks:
+      - redis-cluster-net
+
+  redis-6:
+    image: redis:6.0.9
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --slaveof redis-3 6379 --port 6379
+    ports:
+      - "7005:6379"
+    networks:
+      - redis-cluster-net
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-1:6379
+    depends_on:
+      - redis-1
+    networks:
+      - redis-cluster-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus:/etc/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - redis-exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./grafana/config
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/
+    depends_on:
+      - prometheus
+
+volumes:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  redis-cluster-net:
