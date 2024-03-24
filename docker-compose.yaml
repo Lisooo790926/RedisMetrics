@@ -1,7 +1,8 @@
 version: '3.9'
 
 services:
-  redis-1:
+  # Redis master nodes
+  redis-master-1:
     image: redis:6.0.9
     command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     ports:
@@ -9,54 +10,77 @@ services:
     networks:
       - redis-cluster-net
 
-  redis-2:
+  redis-master-2:
     image: redis:6.0.9
-    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     ports:
       - "7001:6379"
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     networks:
       - redis-cluster-net
 
-  redis-3:
+  redis-master-3:
     image: redis:6.0.9
-    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     ports:
       - "7002:6379"
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     networks:
       - redis-cluster-net
 
-  redis-4:
+  # Redis replica nodes
+  redis-replica-1:
     image: redis:6.0.9
-    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --slaveof redis-1 6379 --port 6379
     ports:
       - "7003:6379"
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     networks:
       - redis-cluster-net
 
-  redis-5:
+  redis-replica-2:
     image: redis:6.0.9
-    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --slaveof redis-2 6379 --port 6379
     ports:
       - "7004:6379"
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     networks:
       - redis-cluster-net
 
-  redis-6:
+  redis-replica-3:
     image: redis:6.0.9
-    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --slaveof redis-3 6379 --port 6379
     ports:
       - "7005:6379"
+    command: redis-server --appendonly yes --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --port 6379
     networks:
       - redis-cluster-net
 
-  redis-exporter:
+  redis-exporter-1:
     image: oliver006/redis_exporter:latest
     ports:
       - "9121:9121"
     environment:
-      - REDIS_ADDR=redis://redis-1:6379
+      - REDIS_ADDR=redis://redis-master-1:6379
     depends_on:
-      - redis-1
+      - redis-master-1
+    networks:
+      - redis-cluster-net
+
+  redis-exporter-2:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9122:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-master-2
+    depends_on:
+      - redis-master-2
+    networks:
+      - redis-cluster-net
+  
+  redis-exporter-3:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9123:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-master-3
+    depends_on:
+      - redis-master-3
     networks:
       - redis-cluster-net
 
@@ -71,7 +95,11 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
     depends_on:
-      - redis-exporter
+      - redis-exporter-1
+      - redis-exporter-2
+      - redis-exporter-3
+    networks:
+      - redis-cluster-net
 
   grafana:
     image: grafana/grafana:latest
@@ -80,14 +108,12 @@ services:
     env_file:
       - ./grafana/config
     volumes:
-      - ./grafana:/etc/grafana/provisioning/
+      - ./grafana/:/etc/grafana/provisioning/
     depends_on:
       - prometheus
-
-volumes:
-  redis_data:
-  prometheus_data:
-  grafana_data:
+    networks:
+      - redis-cluster-net
 
 networks:
   redis-cluster-net:
+    driver: bridge
