@@ -84,6 +84,39 @@ services:
     networks:
       - redis-cluster-net
 
+  redis-exporter-4:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9124:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-replica-1
+    depends_on:
+      - redis-replica-1
+    networks:
+      - redis-cluster-net
+
+  redis-exporter-5:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9125:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-replica-2
+    depends_on:
+      - redis-replica-2
+    networks:
+      - redis-cluster-net
+
+  redis-exporter-6:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9126:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-replica-3
+    depends_on:
+      - redis-replica-3
+    networks:
+      - redis-cluster-net
+
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -98,6 +131,9 @@ services:
       - redis-exporter-1
       - redis-exporter-2
       - redis-exporter-3
+      - redis-exporter-4
+      - redis-exporter-5
+      - redis-exporter-6
     networks:
       - redis-cluster-net
 
