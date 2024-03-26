@@ -30,25 +30,14 @@ The Prometheus service is exposed on port 9090. It uses the `prom/prometheus` im
 - `--storage.tsdb.path=/prometheus`: Defines the directory where Prometheus stores its time series databases.
 - `--web.enable-lifecycle`: Enables certain HTTP endpoints that allow for server lifecycle management.
 
-The Prometheus service depends on all the Redis Exporter services, meaning it will only start after all the Redis Exporters have started.
-
-### Scrape Configurations
+### Prometheus Configurations
 
 The section defines the job and targets that Prometheus needs to scrape data from.
 - `scrape_interval: 15s`: This sets the time interval between two consecutive scrapes (data collections) from the targets. In this case, Prometheus scrapes data every 15 seconds.
-
 - `job_name: 'redis'`: This defines a job named 'redis'. A job in Prometheus represents a collection of processes, often of the same type, that it monitors.
-
 - `static_configs`: This section specifies the targets for the 'redis' job. Targets are the actual endpoints that Prometheus scrapes data from.
-
 - `targets: ['redis-exporter-1:9121', 'redis-exporter-2:9121', 'redis-exporter-3:9121', 'redis-exporter-4:9121', 'redis-exporter-5:9121', 'redis-exporter-6:9121']`: This line lists the targets for the 'redis' job. Each target is a Redis exporter running on a different host (or possibly a different container or pod, depending on your setup). The number after the colon is the port on which the Redis exporter is running. Prometheus will scrape metrics from these exporters at the specified `scrape_interval`.
-
 
 ### Grafana
 
 Grafana is an open-source platform for monitoring and observability. It allows you to query, visualize, alert on, and understand your metrics no matter where they are stored.
-
-The Grafana service is exposed on port 3000 and uses the `grafana/grafana:latest` image. It's configured with an environment file located at `./grafana/config` and a volume that maps `./grafana/` on the host to `/etc/grafana/provisioning/` in the container.
-
-The Grafana service depends on the Prometheus service, meaning it will only start after the Prometheus service has started.
-
