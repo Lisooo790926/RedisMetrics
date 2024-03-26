@@ -44,3 +44,6 @@ The section defines the job and targets that Prometheus needs to scrape data fro
 ### Grafana
 
 Grafana is an open-source platform for monitoring and observability. It allows you to query, visualize, alert on, and understand your metrics no matter where they are stored.
+![image](https://github.com/Lisooo790926/RedisMetrics/assets/48560984/bf6fbf74-42aa-425a-abb2-ac34f3504881)
+
+
