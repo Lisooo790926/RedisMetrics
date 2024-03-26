@@ -10,6 +10,9 @@ Each node uses the `redis:6.0.9` image and runs the `redis-server` command with 
 - `--cluster-enabled yes`: Enables Redis Cluster support.
 - `--cluster-config-file nodes.conf`: Specifies the name of the cluster configuration file.
 - `--cluster-node-timeout 5000`: Sets the node timeout to 5000 milliseconds.
+- `--latency-monitor-threshold 100`: Sets the latency monitor
+- `--maxmemory 100mb`: Sets max memory 
+- `--maxmemory-policy allkeys-lru`: Sets eviction policy
 - `--port 6379`: Sets the Redis server port to 6379.
 
 All nodes are part of the `redis-cluster-net` network.
